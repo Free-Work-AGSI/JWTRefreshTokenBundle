@@ -106,6 +106,13 @@ class AttachRefreshTokenOnSuccessListener
         }
 
         $refreshTokenString = RequestRefreshToken::getRefreshToken($request, $this->tokenParameterName);
+        $refreshTokenTTL = $this->ttl;
+
+        if(array_key_exists('ttl', $data)){
+            $refreshTokenTTL = $data['ttl'];
+            unset($data['ttl']);
+            $event->setData($data);
+        }
 
         if ($refreshTokenString && true === $this->singleUse) {
             $refreshToken = $this->refreshTokenManager->get($refreshTokenString);
@@ -118,7 +125,7 @@ class AttachRefreshTokenOnSuccessListener
 
         if (!$refreshTokenString) {
             $datetime = new \DateTime();
-            $datetime->modify('+'.$this->ttl.' seconds');
+            $datetime->modify('+'.$refreshTokenTTL.' seconds');
 
             $refreshToken = $this->refreshTokenManager->create();
 
@@ -152,7 +159,7 @@ class AttachRefreshTokenOnSuccessListener
                 new Cookie(
                     $this->tokenParameterName,
                     $refreshTokenString,
-                    time() + $this->ttl,
+                    time() + $refreshTokenTTL,
                     $this->cookie['path'],
                     $this->cookie['domain'],
                     $this->cookie['secure'],
