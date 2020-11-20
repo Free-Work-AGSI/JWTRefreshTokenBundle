@@ -32,7 +32,8 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
-                ->integerNode('ttl')->defaultValue(2592000)->end()
+                ->integerNode('ttl')->defaultValue(86400)->end()
+                ->integerNode('ttl_remember')->defaultValue(2592000)->end()
                 ->booleanNode('ttl_update')->defaultFalse()->end()
                 ->scalarNode('firewall')->defaultValue('api')->end()
                 ->scalarNode('user_provider')->defaultNull()->end()

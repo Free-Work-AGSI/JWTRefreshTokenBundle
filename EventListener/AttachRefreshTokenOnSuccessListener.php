@@ -34,6 +34,11 @@ class AttachRefreshTokenOnSuccessListener
     protected $ttl;
 
     /**
+     * @var int
+     */
+    protected $ttlRemember;
+
+    /**
      * @var ValidatorInterface
      */
     protected $validator;
@@ -67,17 +72,19 @@ class AttachRefreshTokenOnSuccessListener
      * AttachRefreshTokenOnSuccessListener constructor.
      *
      * @param RefreshTokenManagerInterface $refreshTokenManager
-     * @param int                          $ttl
-     * @param ValidatorInterface           $validator
-     * @param RequestStack                 $requestStack
-     * @param string                       $userIdentityField
-     * @param string                       $tokenParameterName
-     * @param bool                         $singleUse
-     * @param array                        $cookie
+     * @param int $ttl
+     * @param $ttlRemember
+     * @param ValidatorInterface $validator
+     * @param RequestStack $requestStack
+     * @param string $userIdentityField
+     * @param string $tokenParameterName
+     * @param bool $singleUse
+     * @param array $cookie
      */
     public function __construct(
         RefreshTokenManagerInterface $refreshTokenManager,
         $ttl,
+        $ttlRemember,
         ValidatorInterface $validator,
         RequestStack $requestStack,
         $userIdentityField,
@@ -87,6 +94,7 @@ class AttachRefreshTokenOnSuccessListener
     ) {
         $this->refreshTokenManager = $refreshTokenManager;
         $this->ttl = $ttl;
+        $this->ttlRemember = $ttlRemember;
         $this->validator = $validator;
         $this->requestStack = $requestStack;
         $this->userIdentityField = $userIdentityField;
@@ -106,13 +114,10 @@ class AttachRefreshTokenOnSuccessListener
         }
 
         $refreshTokenString = RequestRefreshToken::getRefreshToken($request, $this->tokenParameterName);
-        $refreshTokenTTL = $this->ttl;
 
-        if(array_key_exists('ttl', $data)){
-            $refreshTokenTTL = $data['ttl'];
-            unset($data['ttl']);
-            $event->setData($data);
-        }
+        $remember = json_decode($request->getContent(), true)['remember'] ?? false;
+
+        $refreshTokenTTL = $remember ? $this->ttlRemember : $this->ttl;
 
         if ($refreshTokenString && true === $this->singleUse) {
             $refreshToken = $this->refreshTokenManager->get($refreshTokenString);
@@ -168,6 +173,7 @@ class AttachRefreshTokenOnSuccessListener
                     $this->cookie['sameSite']
                 )
             );
+
         } else {
             $data[$this->tokenParameterName] = $refreshTokenString;
 
